@@ -19,7 +19,7 @@ From: ubuntu:20.04
 #####  python3  #####
 %post
     export DEBIAN_FRONTEND=noninteractive
-    TZ=Europe/Paris
+    TZ=Asia/Kolkata
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
     apt update && apt -y upgrade
     apt -y install python3-pyqt5 python3-pyqt5.qtwebengine
@@ -56,7 +56,7 @@ From: ubuntu:20.04
         dpkg -i libcfitsio-dev_3.490-3_amd64.deb
 
     apt-get install -y csh swig
-    export TZ=Europe/Paris
+    export TZ=Asia/Kolkata
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
     apt-get update
     apt-get install -y python-tk

@@ -55,7 +55,7 @@ singularity --version
 ``` bash
 git clone https://github.com/Arul16psp05/GBD_DART_singularity.git
 cd GBD_DART_singularity
-singularity build GBD_DART.sif GBD_DART_singularity
+sudo singularity build GBD_DART.sif GBD_DART_singularity
 ```
 
 #### RUN GBD_DART singularity container
