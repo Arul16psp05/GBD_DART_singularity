@@ -15,14 +15,14 @@ Build a container
 ------------------------
 
 ### UPDATING NECESSARY PACKAGES INSTALLED 
-##(assuming you are using Debian-based systems, including Ubuntu)
+## (assuming you are using Debian-based systems, including Ubuntu)
 
 ``` bash
 sudo apt-get update 
 sudo apt-get install -y autoconf automake cryptsetup git libfuse-dev libglib2.0-dev libseccomp-dev libtool pkg-config runc squashfs-tools squashfs-tools-ng uidmap wget zlib1g-dev
 ```
 
-###INSTALLING GO
+## INSTALLING GO
 
 ```bash
 GO_VERSION=1.21.5 OS=linux ARCH=amd64
@@ -36,7 +36,7 @@ Verify if you have the latest version before proceeding further with,
 go version
 ```
 
-###INSTALLING SINGULARITY
+## INSTALLING SINGULARITY
 
 ```bash
 SINGULARITY_VERSION=4.0.0 
