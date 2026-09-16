@@ -27,7 +27,7 @@ sudo apt-get install -y autoconf automake cryptsetup git libfuse-dev libglib2.0-
 ```bash
 GO_VERSION=1.21.5 OS=linux ARCH=amd64
 wget -O /tmp/go${GO_VERSION}.${OS}-${ARCH}.tar.gz https://dl.google.com/go/go${GO_VERSION}.${OS}-${ARCH}.tar.gz
-tar -C /usr/local -xzf /tmp/go${GO_VERSION}.${OS}-${ARCH}.tar.gz
+sudo tar -C /usr/local -xzf /tmp/go${GO_VERSION}.${OS}-${ARCH}.tar.gz
 echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
 source ~/.bashrc
 ```
@@ -54,7 +54,7 @@ singularity --version
 
 ``` bash
 git clone https://github.com/Arul16psp05/GBD_DART_singularity.git
-cd Docker_receipts/psrchive_py3
+cd GBD_DART_singularity
 singularity build GBD_DART.sif GBD_DART_singularity
 ```
 
