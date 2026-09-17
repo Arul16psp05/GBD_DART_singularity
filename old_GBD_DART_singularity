@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: ubuntu:22.04
+From: ubuntu:20.04
 
 #####  CHECKOUT #####
 %post
@@ -15,14 +15,9 @@ From: ubuntu:22.04
     config/clk_dir
     config/plk_setup_fr606_embrace.dat
     config/get_casacore_data.sh
-    packages/fftw-3.2.2.tar.gz
-    packages/cfitsio-3.49.tar.gz
-    packages/psrcat_pkg.tar.gz
-    
+
 #####  python3  #####
 %post
-    date >> installation_log.txt
-    echo 'Installating Essentials' >> installation_log.txt
     export DEBIAN_FRONTEND=noninteractive
     TZ=Asia/Kolkata
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -45,17 +40,15 @@ From: ubuntu:22.04
     apt -y install software-properties-common
     add-apt-repository ppa:deadsnakes/ppa
     apt update
-    # apt -y install python3.11 python3.11-distutils python3.11-venv python3.8-venv
-    # apt -y install python3.11-dev
-    apt -y install python3.8 python3.8-distutils python3.8-venv
+    apt -y install python3.11 python3.11-distutils python3.11-venv python3.8-venv
+    apt -y install python3.11-dev
 
     ln -s /usr/bin/python3.8 /usr/bin/python
 
     export PSRHOME=/usr/local/pulsar
     mkdir -p $PSRHOME/src
     cat config/bashrc >  /etc/bash.bashrc
-    mkdir -p $PSRHOME/packages
-    
+
     cd /usr/local/pulsar && \
         wget http://ftp.debian.org/debian/pool/main/c/cfitsio/libcfitsio9_3.490-3_amd64.deb && \
         wget http://ftp.br.debian.org/debian/pool/main/c/cfitsio/libcfitsio-dev_3.490-3_amd64.deb && \
@@ -76,14 +69,12 @@ From: ubuntu:22.04
     apt-get -y install pciutils mesa-utils xvfb
     export LIBGL_ALWAYS_SOFTWARE=1
     echo 'export LIBGL_ALWAYS_SOFTWARE=1' >> /etc/bash.bashrc
-    apt-get -y purge nvidia-*
-    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
-    dpkg -i cuda-keyring_1.0-1_all.deb
-    apt-get update
-    apt-get -y install cuda
-    date >> installation_log.txt
-    echo 'CUDA instalation over' >> installation_log.txt
-    
+    # apt-get -y purge nvidia-*
+    # wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+    # dpkg -i cuda-keyring_1.0-1_all.deb
+    # apt-get update
+    # apt-get -y install cuda
+
 #####  python2  #####
 %post
     apt -y install python2-dev
@@ -130,9 +121,7 @@ From: ubuntu:22.04
     wget https://github.com/StarlaneStudios/Surrealist/releases/download/v1.11.4/surrealist-v1.11.4-linux.deb
     dpkg -i surrealist-v1.11.4-linux.deb
     pip3 install surrealdb
-    date >> installation_log.txt
-    echo 'SurrealDB instalation over' >> installation_log.txt
-    
+
 #####  TEMPO2  #####
 %post
     . /etc/bash.bashrc && \
@@ -148,48 +137,7 @@ From: ubuntu:22.04
         make plugins && \
         make plugins-install && \
         cp -r T2runtime/* $TEMPO2/
-    date >> installation_log.txt   
-    echo 'TEMPO2 instalation over' >> installation_log.txt
-    
-#####  Pre Requirements  #####
-%post
-    mv packages/fftw-3.2.2.tar.gz $PSRHOME/packages/
-    mv packages/cfitsio-3.49.tar.gz $PSRHOME/packages/
-    mv packages/psrcat_pkg.tar.gz $PSRHOME/packages/
-    
-    export  cfitsio="cfitsio-3.49"
-    export  fftw="fftw-3.2.2"
-    export  psrcat="psrcat_pkg"
 
-    ###    cfitsio-3.49  ###
-    cd $PSRHOME/packages/ && \
-        gunzip -c ${cfitsio}.tar.gz | tar xvf -
-        cd $cfitsio
-        ./configure --prefix=$PSRHOME --enable-reentrant
-        make clean
-        make
-        make shared
-        make install
-
-    ###    fftw-3.2.2  ###
-    cd $PSRHOME/packages/ && \
-        gunzip -c ${fftw}.tar.gz | tar xvf -
-        cd $fftw
-        ./configure --enable-shared --enable-float --enable-sse --disable-dependency-tracking --prefix=$PSRHOME --enable-reentrant
-        make clean
-        make
-        make install    
-
-    ###    psrcat_pkg  ###
-    cd $PSRHOME/packages/ && \
-        gunzip -c ${psrcat_pkg}.tar.gz | tar xvf -
-        cd $psrcat_pkg
-        csh makeit
-        mkdir -p /home/arul/psrsoft/bin
-        mv psrcat /home/arul/psrsoft/bin
-        mkdir -p /home/arul/psrsoft/psrcat
-        mv psrcat.db /home/arul/psrsoft/psrcat
-                
 #####  PSRCHIVE  #####
 %post
     cd $PSRHOME && \
@@ -199,13 +147,29 @@ From: ubuntu:22.04
         git checkout master && \
         git checkout $GIT_PSRCHIVE_TAG && \
         ./bootstrap
+    cd $PSRHOME/psrchive && \
+        ./configure --prefix=$PSRHOME || true && \
+        cd packages && make
+    cd $PSRHOME/psrchive && \
+        ./packages/fftw.csh
+    cd $PSRHOME/psrchive && \
+        ./packages/cfitsio.csh && \
+        ./configure --prefix=$PSRHOME || true
+    cd $PSRHOME/src && \
+        wget http://www.atnf.csiro.au/research/pulsar/psrcat/downloads/psrcat_pkg.tar.gz && \
+        tar --no-same-owner -xzvf psrcat_pkg.tar.gz && \
+        cd psrcat_tar && \
+        csh makeit && \
+        mkdir -p /usr/local/pulsar/bin || true && \
+        mv psrcat /usr/local/pulsar/bin && \
+        mkdir -p /usr/local/pulsar/psrcat && \
+        mv psrcat.db /usr/local/pulsar/psrcat
+    cd $PSRHOME/psrchive && \
         ./configure --prefix=$PSRHOME --enable-shared --with-x --with-psrcat=psrcat && \
         make -j 6 && \
         make install
     echo '/usr/local/pulsar/lib/python3.8/site-packages' > /usr/local/lib/python3.8/dist-packages/mymodule.pth
-    date >> installation_log.txt
-    echo 'PSRCHIVE instalation over' >> log.txt
-    
+
 #####  TEMPO 1  #####
 %post
     cd $PSRHOME
@@ -216,9 +180,8 @@ From: ubuntu:22.04
     ./configure
     make
     make install
-    date >> installation_log.txt
-    echo 'TEMPO 1 instalation over' >> log.txt
-    
+
+
 %post
     apt-get install -y x11-apps gedit gimp evince nano vim emacs subversion
     apt-get install -y ghostscript
@@ -240,9 +203,7 @@ From: ubuntu:22.04
 
     cd $PRESTO && \
         pip3 install ./
-    date >> installation_log.txt
-    echo 'PRESTO instalation over' >> log.txt
-    
+
 ##### SIGPROC #####
 %post
     . /etc/bash.bashrc
@@ -253,10 +214,7 @@ From: ubuntu:22.04
     ./configure --prefix=$PSRHOME
     make
     make install
-    
-    date >> installation_log.txt
-    echo 'SIGPROC instalation over' >> log.txt
-    
+
 ##### RFICLEAN #####
 %post
     . /etc/bash.bashrc
