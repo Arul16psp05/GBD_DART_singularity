@@ -1,0 +1,106 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+#####  CHECKOUT #####
+%post
+    GIT_PSRCHIVE_TAG="d706adce0b3faeeb7caa4dbb3f365e59dd06b299"
+    GIT_DSPSR_TAG="879158a8e98a1ffbe99aa6cd06ea57a30508df79"
+    GIT_PRESTO_TAG="v4.0"
+
+%files
+    config/bashrc
+    config/observatories.dat
+    config/obsys.dat
+    config/psrchive.cfg
+    config/clk_dir
+    config/plk_setup_fr606_embrace.dat
+    config/get_casacore_data.sh
+    packages/fftw-3.2.2.tar.gz
+    packages/cfitsio-3.49.tar.gz
+    packages/psrcat_pkg.tar.gz
+    
+#####  python3  #####
+%post
+    export PSRHOME=/usr/local/pulsar
+    mkdir -p $PSRHOME/src
+    cat config/bashrc >  /etc/bash.bashrc
+    mkdir -p $PSRHOME/packages
+    
+    date >> installation_log.txt
+    echo 'Installating Essentials' >> installation_log.txt
+    export DEBIAN_FRONTEND=noninteractive
+    TZ=Asia/Kolkata
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+    apt update && apt -y upgrade
+    #apt -y install python3-pyqt5 python3-pyqt5.qtwebengine
+    #apt -y install python3-tk
+    #apt -y install python3-distutils
+    apt -y install build-essential manpages-dev htop wget tmux rsync locate git curl autotools-dev autoconf libtool make g++ gfortran libfftw3-dev libfftw3-single3 libfftw3-mpi-dev libgsl-dev pgplot5 python3-pip csh tcsh swig python-tk pkg-config x11-apps gedit ghostscript libpng-dev libx11-dev libglib2.0-dev mpich openmpi-bin firefox imagemagick gnuplot s-nail #  nvidia-cuda-toolkit
+    apt -y install bc libboost-all-dev f2c
+    apt -y install mailutils
+    
+#####  Pre Requirements  #####
+%post
+    cp /packages/fftw-3.2.2.tar.gz $PSRHOME/packages/
+    cp /packages/cfitsio-3.49.tar.gz $PSRHOME/packages/
+    cp /packages/psrcat_pkg.tar.gz $PSRHOME/packages/
+    cp /packages/sofa_c-20231011.tar.gz $PSRHOME/src/
+    
+    export  cfitsio="cfitsio-3.49"
+    export  fftw="fftw-3.2.2"
+    export  psrcat="psrcat_pkg"
+    export  sofa="sofa_c-20231011"
+
+    ###    cfitsio-3.49  ###
+    cd $PSRHOME/packages/ && \
+        gunzip -c ${cfitsio}.tar.gz | tar xvf -
+        cd $cfitsio
+        ./configure --prefix=$PSRHOME --enable-reentrant
+        make clean
+        make
+        make shared
+        make install
+
+    ###    fftw-3.2.2  ###
+    cd $PSRHOME/packages/ && \
+        gunzip -c ${fftw}.tar.gz | tar xvf -
+        cd $fftw
+        ./configure --enable-shared --enable-float --enable-sse --disable-dependency-tracking --prefix=$PSRHOME --enable-reentrant
+        make clean
+        make
+        make install    
+
+    ###    psrcat_pkg  ###
+    cd $PSRHOME/packages/ && \
+        gunzip -c ${psrcat}.tar.gz | tar xvf -
+        cd $psrcat
+        csh makeit
+        mkdir -p /usr/local/pulsar/bin
+        mv psrcat /usr/local/pulsar/bin
+        mkdir -p /usr/local/pulsar/psrcat
+        mv psrcat.db /usr/local/pulsar/psrcat
+
+    ### sofa ###
+    cd $PSRHOME/src/ && \
+        gunzip -c ${sofa}.tar.gz | tar xvf -
+        cd $PSRHOME/src/sofa/20231011/c/src
+        make && make test
+        
+#####  PlotX/TransientX  #####
+%post
+
+    ### PlotX/TransientX ###
+    cd $PSRHOME/src
+        git clone https://github.com/ypmen/PlotX.git PlotX
+        git clone https://github.com/ypmen/TransientX.git TransientX
+    cd $PSRHOME/src/PlotX
+       ./bootstrap
+       ./configure --prefix=$PSRHOME
+       make && make install
+       make clean
+    cd $PSRHOME/src/TransientX
+       ./bootstrap
+       ./configure --prefix=$PSRHOME CXXFLAGS="-std=c++11 -O3" LDFLAGS="-L$PSRHOME/src/sofa/20200721/c/src -L$PSRHOME/lib" CPPFLAGS="-I$PSRHOME/src/sofa/20200721/c/src -I$PSRHOME/include"
+       make && make install
+       make clean
+       
