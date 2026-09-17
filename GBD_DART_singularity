@@ -30,7 +30,7 @@ From: ubuntu:22.04
     apt -y install python3-pyqt5 python3-pyqt5.qtwebengine
     apt -y install python3-tk
     apt -y install python3-distutils
-    apt -y install build-essential manpages-dev htop wget tmux rsync locate git curl autotools-dev autoconf libtool make g++ gfortran libfftw3-dev libfftw3-single3 libfftw3-mpi-dev libgsl-dev pgplot5 python3-pip csh tcsh swig python-tk pkg-config x11-apps gedit ghostscript libpng-dev libx11-dev libglib2.0-dev mpich openmpi-bin nvidia-cuda-toolkit firefox imagemagick gnuplot s-nail
+    apt -y install build-essential manpages-dev htop wget tmux rsync locate git curl autotools-dev autoconf libtool make g++ gfortran libfftw3-dev libfftw3-single3 libfftw3-mpi-dev libgsl-dev pgplot5 python3-pip csh tcsh swig python-tk pkg-config x11-apps gedit ghostscript libpng-dev libx11-dev libglib2.0-dev mpich openmpi-bin firefox imagemagick gnuplot s-nail #  nvidia-cuda-toolkit
     apt -y install bc libboost-all-dev f2c
     apt -y install mailutils
 
@@ -153,9 +153,9 @@ From: ubuntu:22.04
     
 #####  Pre Requirements  #####
 %post
-    mv packages/fftw-3.2.2.tar.gz $PSRHOME/packages/
-    mv packages/cfitsio-3.49.tar.gz $PSRHOME/packages/
-    mv packages/psrcat_pkg.tar.gz $PSRHOME/packages/
+    cp packages/fftw-3.2.2.tar.gz $PSRHOME/packages/fftw-3.2.2.tar.gz
+    cp packages/cfitsio-3.49.tar.gz $PSRHOME/packages/cfitsio-3.49.tar.gz
+    cp packages/psrcat_pkg.tar.gz $PSRHOME/packages/psrcat_pkg.tar.gz
     
     export  cfitsio="cfitsio-3.49"
     export  fftw="fftw-3.2.2"
