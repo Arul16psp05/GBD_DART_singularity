@@ -18,6 +18,7 @@ From: ubuntu:22.04
     packages/fftw-3.2.2.tar.gz
     packages/cfitsio-3.49.tar.gz
     packages/psrcat_pkg.tar.gz
+    packages/sofa_c-20231011.tar.gz
     
 #####  python3  #####
 %post
@@ -32,9 +33,9 @@ From: ubuntu:22.04
     TZ=Asia/Kolkata
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
     apt update && apt -y upgrade
-    #apt -y install python3-pyqt5 python3-pyqt5.qtwebengine
-    #apt -y install python3-tk
-    #apt -y install python3-distutils
+    apt -y install python3-pyqt5 python3-pyqt5.qtwebengine
+    apt -y install python3-tk
+    apt -y install python3-distutils
     apt -y install build-essential manpages-dev htop wget tmux rsync locate git curl autotools-dev autoconf libtool make g++ gfortran libfftw3-dev libfftw3-single3 libfftw3-mpi-dev libgsl-dev pgplot5 python3-pip csh tcsh swig python-tk pkg-config x11-apps gedit ghostscript libpng-dev libx11-dev libglib2.0-dev mpich openmpi-bin firefox imagemagick gnuplot s-nail #  nvidia-cuda-toolkit
     apt -y install bc libboost-all-dev f2c
     apt -y install mailutils
@@ -73,7 +74,7 @@ From: ubuntu:22.04
     ###    psrcat_pkg  ###
     cd $PSRHOME/packages/ && \
         gunzip -c ${psrcat}.tar.gz | tar xvf -
-        cd $psrcat
+        cd psrcat_tar
         csh makeit
         mkdir -p /usr/local/pulsar/bin
         mv psrcat /usr/local/pulsar/bin
