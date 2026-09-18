@@ -2,10 +2,10 @@ Bootstrap: docker
 From: ubuntu:22.04
 
 #####  CHECKOUT #####
-%post
-    GIT_PSRCHIVE_TAG="d706adce0b3faeeb7caa4dbb3f365e59dd06b299"
-    GIT_DSPSR_TAG="879158a8e98a1ffbe99aa6cd06ea57a30508df79"
-    GIT_PRESTO_TAG="v4.0"
+#%post
+    #GIT_PSRCHIVE_TAG="d706adce0b3faeeb7caa4dbb3f365e59dd06b299"
+    #GIT_DSPSR_TAG="879158a8e98a1ffbe99aa6cd06ea57a30508df79"
+    #GIT_PRESTO_TAG="v4.0"
 
 %files
     config/bashrc
@@ -20,6 +20,13 @@ From: ubuntu:22.04
     packages/psrcat_pkg.tar.gz
     packages/sofa_c-20231011.tar.gz
     packages/sigpyproc3-1.2.0.tar.gz
+    DART_patch_file/psrchive/Add_DART_telescope_psrchive.sh
+    DART_patch_file/psrchive/file_locations.txt
+    DART_patch_file/psrchive/Telescopes_C_patch_1.C
+    DART_patch_file/psrchive/Telescopes_C_patch_2.C    
+    DART_patch_file/psrchive/Telescopes_h_patch.h
+    DART_patch_file/psrchive/itoa_C_patch.C
+    
     
 #####  python3  #####
 %post
@@ -27,6 +34,7 @@ From: ubuntu:22.04
     mkdir -p $PSRHOME/src
     cat config/bashrc >  /etc/bash.bashrc
     mkdir -p $PSRHOME/packages
+    mkdir -p $PSRHOME/DART_patch_file/psrchive
     
     date >> installation_log.txt
     echo 'Installating Essentials' >> installation_log.txt
@@ -51,13 +59,13 @@ From: ubuntu:22.04
     pip3 install  --upgrade meson meson-python ninja
     
     apt -y install software-properties-common
-    add-apt-repository ppa:deadsnakes/ppa
-    apt update
+    #add-apt-repository ppa:deadsnakes/ppa
+    #apt update
     # apt -y install python3.11 python3.11-distutils python3.11-venv python3.8-venv
     # apt -y install python3.11-dev
-    apt -y install python3.8 python3.8-distutils python3.8-venv
+    #apt -y install python3.8 python3.8-distutils python3.8-venv
 
-    ln -s /usr/bin/python3.8 /usr/bin/python
+    ln -s /usr/bin/python3 /usr/bin/python
 
     cd /usr/local/pulsar && \
         wget http://ftp.debian.org/debian/pool/main/c/cfitsio/libcfitsio9_3.490-3_amd64.deb && \
@@ -110,6 +118,13 @@ From: ubuntu:22.04
     cp /packages/cfitsio-3.49.tar.gz $PSRHOME/packages/
     cp /packages/psrcat_pkg.tar.gz $PSRHOME/packages/
     cp /packages/sofa_c-20231011.tar.gz $PSRHOME/src/
+    cp /packages/sigpyproc3-1.2.0.tar.gz $PSRHOME/packages/
+    cp /DART_patch_file/psrchive/Add_DART_telescope_psrchive.sh $PSRHOME/DART_patch_file/psrchive/
+    cp /DART_patch_file/psrchive/file_locations.txt $PSRHOME/DART_patch_file/psrchive/
+    cp /DART_patch_file/psrchive/Telescopes_C_patch_1.C $PSRHOME/DART_patch_file/psrchive/
+    cp /DART_patch_file/psrchive/Telescopes_C_patch_2.C $PSRHOME/DART_patch_file/psrchive/   
+    cp /DART_patch_file/psrchive/Telescopes_h_patch.h $PSRHOME/DART_patch_file/psrchive/
+    cp /DART_patch_file/psrchive/itoa_C_patch.C $PSRHOME/DART_patch_file/psrchive/
     
     export  cfitsio="cfitsio-3.49"
     export  fftw="fftw-3.2.2"
@@ -165,7 +180,7 @@ From: ubuntu:22.04
         gunzip -c ${sigpyproc3}.tar.gz | tar xvf -
         cd $sigpyproc3
         pip3 install .
-  
+
 #####  SurrealDB  #####
 %post
     curl -sSf https://install.surrealdb.com | sh
@@ -197,18 +212,25 @@ From: ubuntu:22.04
 %post
     cd $PSRHOME && \
         git clone http://git.code.sf.net/p/psrchive/code psrchive
-
+ 
+    cd $PSRHOME/DART_patch_file/psrchive
+        mapfile -t file_loc < "file_locations.txt"
+        Telescopes_C_file=$PSRHOME'/'${file_loc[0]}
+        Telescopes_h_file=$PSRHOME'/'${file_loc[1]}
+        itoa_file=$PSRHOME'/'${file_loc[2]}        
+        bash Add_DART_telescope_psrchive.sh $Telescopes_C_file $Telescopes_h_file $itoa_file
+        
     cd $PSRHOME/psrchive && \
-        git checkout master && \
-        git checkout $GIT_PSRCHIVE_TAG && \
+        #git checkout master && \
+        #git checkout $GIT_PSRCHIVE_TAG && \
         ./bootstrap
         ./configure --prefix=$PSRHOME --enable-shared --with-x --with-psrcat=psrcat && \
         make -j 6 && \
         make install
-    echo '/usr/local/pulsar/lib/python3.8/site-packages' > /usr/local/lib/python3.8/dist-packages/mymodule.pth
+    echo '/usr/local/pulsar/lib/python3.10/site-packages' > /usr/local/lib/python3.10/dist-packages/mymodule.pth
     date >> installation_log.txt
     echo 'PSRCHIVE instalation over' >> log.txt
-    
+
 #####  TEMPO 1  #####
 %post
     cd $PSRHOME
@@ -225,150 +247,3 @@ From: ubuntu:22.04
 %post
     apt-get install -y x11-apps gedit gimp evince nano vim emacs subversion
     apt-get install -y ghostscript
-
-#####  PRESTO  #####
-%post
-    apt-get install -y libpng-dev libx11-dev libglib2.0-dev mpich openmpi-bin
-    cd $PSRHOME
-    git clone https://github.com/scottransom/presto presto
-    cd $PSRHOME/presto/
-    git checkout master
-    git checkout $GIT_PRESTO_TAG
-    . /etc/bash.bashrc
-    cd $PRESTO/src
-    make makewisdom
-    make clean
-    make prep
-    make
-
-    cd $PRESTO && \
-        pip3 install ./
-    date >> installation_log.txt
-    echo 'PRESTO instalation over' >> log.txt
-    
-##### SIGPROC #####
-%post
-    . /etc/bash.bashrc
-    cd $PSRHOME
-    git clone https://github.com/SixByNine/sigproc
-    cd sigproc
-    ./bootstrap
-    ./configure --prefix=$PSRHOME
-    make
-    make install
-    
-    date >> installation_log.txt
-    echo 'SIGPROC instalation over' >> log.txt
-    
-##### RFICLEAN #####
-%post
-    . /etc/bash.bashrc
-    cd $PSRHOME
-    git clone https://github.com/ymaan4/RFIClean.git
-    cd RFIClean
-    sed -i "s#MYBIN=.*#MYBIN=/usr/local/pulsar/bin/#" Makefile
-    make
-    make install
-
-##### GPTOOL #####
-%post
-    . /etc/bash.bashrc
-    cd $PSRHOME
-    git clone https://github.com/chowdhuryaditya/gptool.git
-    cd gptool
-    sed -i "s#PGPLOT_INCL=.*#PGPLOT_INCL=-I$(PGPLOT_DIR)/include#" makefile
-    sed -i "s#PGPLOT_LIB=.*#PGPLOT_LIB=-L$(PGPLOT_DIR)/lib#" makefile
-    make
-    mv gptool /usr/local/pulsar/bin/
-    cp plotgptoolsummary.py /usr/local/pulsar/bin/
-
-#####  DSPSR  #####
-%post
-    . /etc/bash.bashrc
-    cd $PSRHOME
-    git clone git://git.code.sf.net/p/dspsr/code dspsr
-    cd $PSRHOME/dspsr
-    git checkout master
-    git checkout $GIT_DSPSR_TAG
-    ./bootstrap
-    echo  'apsr asp bcpm bpsr cpsr cpsr2 gmrt lbadr lbadr64 mark4 mark5 maxim mwa pdev pmdaq puma2 sigproc psrfits caspsr dummy fits spda1k spigot guppi lump' > $PSRHOME/dspsr/backends.list
-    ./configure --prefix=$PSRHOME --enable-shared --with-x 
-    make
-    make install
-
-##### PSRSALSA #####
-%post
-    . /etc/bash.bashrc
-    gsl_version=`gsl-config --version`
-    gsl_version=`python -c "import numpy as np; print('%d0%d' % (np.floor($gsl_version), 10*($gsl_version % 1)))"`
-    cd $PSRHOME
-    git clone https://github.com/weltevrede/psrsalsa.git
-    cd psrsalsa
-    sed -i "s/GSLFLAGS *= *-DGSL_VERSION_NUMBER=.*/GSLFLAGS = -DGSL_VERSION_NUMBER=$gsl_version/" Makefile
-    make
-    echo 'export PATH="$PATH":$PSRHOME/psrsalsa/bin' >> /etc/bash.bashrc
-
-#####  NENUPY  #####
-%post
-    #install nenupy
-    cd $PSRHOME/src
-    git clone https://github.com/AlanLoh/nenupy.git
-    cd $PSRHOME/src/nenupy/
-    pip3 install -r requirements.txt
-    pip3 install .
-
-#####  PyGSM  #####
-%post
-    #install PyGSM
-    cd $PSRHOME/src
-    git clone https://github.com/telegraphic/PyGSM
-    cd PyGSM
-    wget -O gsm2016_components.h5 https://zenodo.org/record/3479985/files/gsm2016_components.h5?download=1
-    wget -O gsm_components.h5 https://zenodo.org/record/3479985/files/gsm_components.h5?download=1
-    python3 setup.py install
-    
-#####  CASACORE_DATA #####
-%post
-    bash /config/get_casacore_data.sh
-
-#####  ANTPAT  #####
-%post
-    pip3 install python-casacore
-    cd $PSRHOME/src
-    git clone https://github.com/2baOrNot2ba/AntPat.git
-    cd $PSRHOME/src/AntPat/
-    python3 setup.py install
-
-#####  DREAMBEAM  #####
-%post
-    cd $PSRHOME/src
-    git clone https://github.com/2baOrNot2ba/dreamBeam.git
-    cd $PSRHOME/src/dreamBeam
-    python3 setup.py install
-
-#####  PYGLOW  #####
-%post
-    cd $PSRHOME/src
-    git clone https://github.com/timduly4/pyglow.git pyglow
-    cd $PSRHOME/src/pyglow
-    make -C src/pyglow/models source
-    python3 setup.py install
-                   
-#####  PlotX/TransientX  #####
-%post
-
-    ### PlotX/TransientX ###
-    cd $PSRHOME/src
-        git clone https://github.com/ypmen/PlotX.git PlotX
-        git clone https://github.com/ypmen/TransientX.git TransientX
-    cd $PSRHOME/src/PlotX
-       ./bootstrap
-       ./configure --prefix=$PSRHOME
-       make && make install
-       make clean
-    cd $PSRHOME/src/TransientX
-       ./bootstrap
-       ./configure --prefix=$PSRHOME CXXFLAGS="-std=c++11 -O3" LDFLAGS="-L$PSRHOME/src/sofa/20200721/c/src -L$PSRHOME/lib" CPPFLAGS="-I$PSRHOME/src/sofa/20200721/c/src -I$PSRHOME/include"
-       make && make install
-       make clean
-       
